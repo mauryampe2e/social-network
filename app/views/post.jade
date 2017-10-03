@@ -1,0 +1,15 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
+    title Post Page
+  body
+    section.container
+      .login
+        h1 Post the message
+        form(method='post', action='http://localhost:3000/users/post/create')
+          p
+            input(type='text', name='postName', value='', placeholder='Post Text', required='')
+          p.submit
+            input(type='submit', name='', value='post')
