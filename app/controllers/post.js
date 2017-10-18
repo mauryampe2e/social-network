@@ -8,9 +8,10 @@ var responseGenerator = require('./../../libs/responseGenerator');
 var auth = require('./../../middlewares/auth');
 
 module.exports.controller = function(app) { 
+
+    //route to get all post
     postRouter.get('/',function(req, res){
-        //console.log("all post by user ");
-        //res.send("all the post by user ");
+        
         postModel.find(function(err,result){
             if(err){
                 res.send(err);
@@ -19,7 +20,8 @@ module.exports.controller = function(app) {
             }
         })
     });
-    //get particular Blogs by id
+    
+    //route to get a post by _id
     postRouter.get('/:id',function(req, res){
         postModel.findOne({'_id':req.params.id},function(err,result){
             if(err){
@@ -29,35 +31,39 @@ module.exports.controller = function(app) {
             }
         })
     })
-    postRouter.post('/comments',function(req, res){
-        var postInfo = {
-                "userName":req.session.user.userName,
-                "fullName":req.session.user.userName
+    //route to get all post by userName
+    postRouter.get('/:userName',function(req, res){
+        var username = req.params.userName;
+        postModel.find({userName:username},function(err,result){
+            if(err){
+                res.send(err);
+            } else {
+                res.send(result);
             }
-        //newPost.likedBy = newPost.push(postInfo); 
-        console.log(req.session.user);   
-
+        })
     })
-    postRouter.post('/create', function(req, res){
-         console.log("create: "+req.session.user);
-        if(req.body.postText!=undefined && req.session.user.email!=undefined){
+    //route to get all post by logged in user
+    postRouter.get('/loggedinUser/:userName', auth.checkLogin, function(req, res){
+        postModel.find({userName:req.params.userName,tags:{$in:[req.session.user.email]}},function(err,result){
+            if(err){
+                res.send(err);  
+            } else {
+                res.send(result);
+            }
+        });
+    });      
+    //route to create a post 
+    postRouter.post('/create', auth.checkLogin, function(req, res){
 
-            var newPost = new postModel({
-               
-                postText        :req.body.postText,
-                email           :req.session.user.email
-                
-            });// end new post
+        if(req.session.user.email!=undefined && req.body.postText!=undefined ){
+   
+            var newPost = new postModel({              
+                userName        : req.session.user.userName,
+                postText        : req.body.postText
+            });//end new user 
+            newPost.tags = req.session.user.email;
+            newPost.fullName = req.session.user.firstName+' '+req.session.user.lastName;
             
-            //console.log("cDreate: "+req.session.user);
-            //var totalComments =  req.session.user.totalComments;
-            //var totalLikes =  req.session.user.totalLikes;
-           
-            ///newPost.comments = newPost.push(userinfo);
-            //newPost.totalComments = totalComments++;
-            //newPost.totalComments = totalLikes++;
-            //newPost.likedBy = newPost.push(postInfo);
-
             newPost.save(function(err){
                 if(err){
                     var myResponse = responseGenerator.generate(true,err,500,null);
@@ -68,7 +74,112 @@ module.exports.controller = function(app) {
                     });                 
                 }
                 else{
-                    var myResponse = responseGenerator.generate(false,"successfully signup user",200,newPost);
+                    var myResponse = responseGenerator.generate(false,"successfully saved post",200,newPost);
+                    res.send(myResponse);
+
+                }
+            });//end new user save
+        }
+        else{
+
+            var myResponse = {
+                error: true,
+                message: "Some body parameter is missing",
+                status: 403,
+                data: null
+            };
+            res.send(myResponse);
+        }      
+    });
+    //route to edit a post 
+    postRouter.put('/:id/edit', auth.checkLogin, function(req, res){
+
+        if(req.session.user.email!=undefined && req.body.postText!=undefined ){
+            
+            postModel.update({'_id':req.params.id},{$set: { postText:req.body.postText, userName:req.session.user.userName }},function(err,result){
+                if(err){
+                    res.send(err);
+                }else{
+                    res.send(result);
+                }
+            })
+
+        } else{
+
+            var myResponse = {
+                    error: true,
+                    message: "Some body parameter is missing",
+                    status: 403,
+                    data: null
+                };
+            res.send(myResponse);
+        }    
+    });
+    //route to like a post
+    postRouter.post('/like', auth.checkLogin, function(req, res){
+
+        if(req.session.user.email!=undefined && req.body.postText!=undefined ){
+   
+            var newPost = new postModel({              
+            });//end new user 
+            var userInfo = { 
+                fullName:req.session.user.firstName+' '+req.session.user.lastName, 
+                userName:req.session.user.userName 
+            }
+            newPost.likedBy.push(userInfo);
+            newPost.totalLikes = newPost.likedBy.length;
+            
+            newPost.save(function(err){
+                if(err){
+                    var myResponse = responseGenerator.generate(true,err,500,null);
+                    //res.send(myResponse);
+                    res.render('error',{
+                        meassge:myResponse.message,
+                        error:myResponse.data
+                    });                 
+                }
+                else{
+                    var myResponse = responseGenerator.generate(false,"successfully saved post",200,newPost);
+                    res.send(myResponse);
+                }
+            });//end new user save
+        }
+        else{
+
+            var myResponse = {
+                error: true,
+                message: "Some body parameter is missing",
+                status: 403,
+                data: null
+            };
+            res.send(myResponse);
+        }      
+    });
+    //route to comment on a post
+    postRouter.post('/comment', auth.checkLogin, function(req, res){
+
+        if(req.session.user.email!=undefined && req.body.postText!=undefined ){
+   
+            var newPost = new postModel({              
+            });//end new user 
+            var userInfo = { 
+                fullName:req.session.user.firstName+' '+req.session.user.lastName, 
+                userName:req.session.user.userName 
+            }
+            newPost.likedBy.push(userInfo);
+            newPost.totalLikes = newPost.likedBy.length;
+            
+            newPost.save(function(err){
+                if(err){
+                    var myResponse = responseGenerator.generate(true,err,500,null);
+                    //res.send(myResponse);
+                    res.render('error',{
+                        meassge:myResponse.message,
+                        error:myResponse.data
+                    });                 
+                }
+                else{
+                    var myResponse = responseGenerator.generate(false,"successfully saved post",200,newPost);
                     res.send(myResponse);
                     //res.render('dashboard',{ user:newUser});
                     //req.session.user = newUser;
@@ -84,33 +195,16 @@ module.exports.controller = function(app) {
 
             var myResponse = {
                 error: true,
-                message: "Some data is missing that is required to post",
+                message: "Some body parameter is missing",
                 status: 403,
                 data: null
             };
 
             res.send(myResponse);
-
-            
-
-        }
-    })
-    postRouter.put('/:id/edit',function(req, res){
-        var update = req.body;
-        postModel.findOneAndUpdate({'_id':req.params.id},update,function(err,result){
-            if(err){
-                res.send(err);
-            }else{
-
-                res.send(result);
-            }
-        });
-        
-    })
-
-
+        }      
+    }); 
+  
     // now making it global to app using a middleware
-   
     app.use('/users/post', postRouter);
  
 } //end contoller code

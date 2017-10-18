@@ -5,6 +5,16 @@ block content
   p Hi #{user.firstName}
   p Your email is #{user.email}
   p Your mobile number is #{user.mobileNumber}
+
+  form(method='post', action='http://localhost:3000/users/post/create')
+          p
+            |Post: 
+            input(type='text', name='postText', value='', placeholder='write a post')
+            
+            input(type='submit', name='', value='Post')
+          p.submit
+            
+
   p
       a(href='http://localhost:3000/users/logout') logout
   p

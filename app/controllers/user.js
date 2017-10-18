@@ -21,8 +21,7 @@ module.exports.controller = function(app) {
     }) //login screen
 
     userRouter.get('/logout', function(req, res){
-        console.log("logout done...");
-        console.log(req.session);
+        console.log("logout done...",req.session);
         req.session.destroy(function(err,success) {
             res.redirect('/users/login/screen');
         })
@@ -45,9 +44,7 @@ module.exports.controller = function(app) {
     })
     userRouter.get('/:userName',function(req, res){
         var username = req.params.userName;
-        userModel.findOne({
-            userName:username
-        },function(err, user){
+        userModel.findOne({userName:username},function(err, user){
             if(err){
                 res.send(err);
             }else{
@@ -70,7 +67,7 @@ module.exports.controller = function(app) {
 
             });// end new user 
             
-            newUser.userName = newUser.userName+
+            //newUser.userName = newUser.userName
             newUser.save(function(err){
                 if(err){
                     var myResponse = responseGenerator.generate(true,err,500,null);
@@ -139,7 +136,7 @@ module.exports.controller = function(app) {
                 //res.render('dashboard',{ user:foundUser});
                 req.session.user = foundUser;
                 delete req.session.user.password;
-                console.log("login dashboard...");
+                console.log("login dashboard...",req.session.user);
                 res.redirect('/users/dashboard');
             }
 
